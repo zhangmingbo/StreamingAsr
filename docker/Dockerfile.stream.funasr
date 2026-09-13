@@ -1,0 +1,18 @@
+FROM funasr-onnx-v3
+WORKDIR /opt/funasr
+
+# 安装 Flask-SocketIO 和 funasr_onnx
+RUN pip install --no-cache-dir flask-socketio funasr_onnx -i https://mirrors.aliyun.com/pypi/simple/
+
+# 复制流式服务代码（funasr_onnx 版本）
+COPY stream_server_funasr.py /opt/funasr/stream_server.py
+
+# 复制测试页面
+COPY stream_test.html /opt/funasr/stream_test.html
+
+# 创建结果目录
+RUN mkdir -p /opt/funasr/results /opt/funasr/audio
+
+EXPOSE 5003
+
+CMD ["python3", "/opt/funasr/stream_server.py"]

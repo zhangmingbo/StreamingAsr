@@ -1,0 +1,30 @@
+FROM python:3.9-slim-bookworm
+
+WORKDIR /opt/funasr
+
+# 使用阿里云 Debian 镜像
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
+
+# 分两步安装，避免访问外网超时
+RUN pip install --no-cache-dir \
+    torch torchaudio \
+    --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir \
+    flask flask-socketio numpy funasr modelscope \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+COPY stream_server.py /opt/funasr/stream_server.py
+COPY stream_test.html /opt/funasr/stream_test.html
+
+# SSL 证书
+COPY server.crt /opt/funasr/server.crt
+COPY server.key /opt/funasr/server.key
+
+RUN mkdir -p /opt/funasr/results /opt/funasr/audio
+
+EXPOSE 5002
+
+CMD ["python3", "/opt/funasr/stream_server.py"]
