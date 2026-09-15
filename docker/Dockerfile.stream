@@ -1,31 +1,40 @@
-# FunASR 流式语音识别服务 (sherpa-onnx)
-# 精简镜像：仅包含流式识别所需
-FROM python:3.9-slim
+# ============================================================
+# FunASR 流式语音识别服务 Dockerfile（Gateway 网关容器）
+#
+# 架构：Gateway 容器 + FunASR Runtime 容器（双容器部署）
+# Gateway 负责：WebSocket 网关、鉴权、音频转发
+# Runtime 负责：FSMN-VAD + Paraformer Streaming + 标点 + 热词
+#
+# 构建命令（从项目根目录执行）:
+#   docker build -f docker/Dockerfile.stream -t funasr-stream .
+#
+# 运行命令（推荐 docker-compose）:
+#   docker-compose -f docker/docker-compose.yml up -d
+#
+# 容器命名规范: funasr-stream（网关）+ funasr-runtime（推理）
+# 挂载配置:
+#   /opt/funasr/models             → 模型文件（共享，只读）
+#   /opt/streaming-asr/results     → 识别结果（读写）
+#   /opt/streaming-asr/audio       → 录音文件（读写）
+# ============================================================
 
-WORKDIR /opt/funasr
+FROM argos-base:latest
 
-# 安装系统依赖
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libsndfile1 && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/streaming-asr
 
-# 安装 Python 依赖
-RUN pip install --no-cache-dir \
-    flask \
-    flask-socketio \
-    numpy \
-    sherpa-onnx==1.13.7 \
-    -i https://mirrors.aliyun.com/pypi/simple/
+# 服务代码和授权客户端（worker.py 已废弃，推理由 Runtime 容器负责）
+COPY src/stream_server.py /opt/streaming-asr/src/stream_server.py
+COPY src/asr_license_client.py /opt/streaming-asr/src/asr_license_client.py
+COPY src/stream_test.html /opt/streaming-asr/src/stream_test.html
 
-# 复制流式服务代码
-COPY stream_server.py /opt/funasr/stream_server.py
+# websocket-client: 连接 FunASR Runtime WebSocket; eventlet: 网关可选优化
+RUN pip install --no-cache-dir websocket-client eventlet
 
-# 复制 sherpa-onnx 模型 (INT8 量化)
-COPY sherpa-model/ /opt/funasr/model/
+# 模型通过运行时 volume 挂载: -v /opt/funasr/models:/opt/funasr/models
 
 # 创建结果目录
-RUN mkdir -p /opt/funasr/results /opt/funasr/audio
+RUN mkdir -p /opt/streaming-asr/results /opt/streaming-asr/audio
 
 EXPOSE 5002
 
-CMD ["python3", "/opt/funasr/stream_server.py"]
+CMD ["python3", "-u", "/opt/streaming-asr/src/stream_server.py"]

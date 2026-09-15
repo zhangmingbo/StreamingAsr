@@ -1,0 +1,54 @@
+# FunASR 流式语音识别服务 — 单容器合并部署
+#
+# 架构:
+#   argosasr-streaming-delivery（单容器）
+#     ├── C++ Runtime  (funasr-wss-server-2pass, 端口 10095)
+#     └── Python Gateway (Flask-SocketIO, 端口 5002)
+#
+# 部署:
+#   1. 复制 .env.example 为 .env 并修改参数
+#   2. docker-compose -f docker/docker-compose.yml up -d --build
+#
+# 停止:
+#   docker-compose -f docker/docker-compose.yml down
+#
+# 查看日志:
+#   docker-compose -f docker/docker-compose.yml logs -f
+
+version: "3.8"
+
+services:
+  argosasr-streaming-delivery:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.merged
+    container_name: argosasr-streaming-delivery
+    restart: always
+    privileged: true
+    env_file:
+      - .env
+    ports:
+      - "${SERVICE_PORT:-5002}:5002"
+    volumes:
+      # 模型文件（Runtime 内部路径 /workspace/models/damo）
+      - ${MODEL_DIR:-/opt/argosasr/models/iic}:/workspace/models/damo
+      # 识别结果和录音
+      - ${RESULT_DIR:-/opt/streaming-asr/results}:/opt/streaming-asr/results
+      - ${AUDIO_DIR:-/opt/streaming-asr/audio}:/opt/streaming-asr/audio
+    environment:
+      - RUNTIME_WS_URL=wss://localhost:${RUNTIME_PORT:-10095}
+      - MAX_SESSIONS=${MAX_SESSIONS:-20}
+      - SESSION_TIMEOUT=${SESSION_TIMEOUT:-15}
+      - DECODER_THREAD_NUM=${DECODER_THREAD_NUM:-2}
+      - IO_THREAD_NUM=${IO_THREAD_NUM:-2}
+      - RUNTIME_PORT=${RUNTIME_PORT:-10095}
+      - LICENSE_SERVER_IP=${LICENSE_SERVER_IP:-host.docker.internal}
+      - LICENSE_SERVER_PORT=${LICENSE_SERVER_PORT:-9800}
+    extra_hosts:
+      - "host.docker.internal:${LICENSE_SERVER_IP:-host-gateway}"
+    # 资源限制（通过 .env 调整）
+    deploy:
+      resources:
+        limits:
+          cpus: "${CONTAINER_CPUS:-4.0}"
+          memory: ${CONTAINER_MEMORY:-6G}

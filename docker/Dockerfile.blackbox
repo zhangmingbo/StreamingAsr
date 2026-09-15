@@ -1,0 +1,76 @@
+# ============================================================
+# FunASR 流式语音识别服务 — 黑盒交付版 Dockerfile
+#
+# 参考 argosasr-offline-delivery 构建方式：
+#   1. 基于 Runtime 官方镜像（含 C++ 推理引擎 + 全部依赖）
+#   2. 安装 Python 网关依赖
+#   3. 复制源码 → 编译为 .pyc 字节码 → 删除 .py 源码
+#   4. 打包模型文件进镜像
+#   5. 最终镜像无任何源码，纯黑盒交付
+#
+# 构建命令（在服务器上执行）:
+#   cd /opt/argosasr && docker build -f Dockerfile.blackbox -t argosasr-streaming-delivery:v5.7 .
+#
+# 运行命令:
+#   docker run -d --name argosasr-streaming-delivery --restart always --privileged \
+#     --add-host=host.docker.internal:host-gateway \
+#     -p 5002:5002 \
+#     -e DECODER_THREAD_NUM=2 \
+#     -e IO_THREAD_NUM=2 \
+#     -e MAX_SESSIONS=20 \
+#     argosasr-streaming-delivery:v5.7
+# ============================================================
+
+FROM registry.cn-hangzhou.aliyuncs.com/funasr_repo/funasr:funasr-runtime-sdk-online-cpu-0.1.4
+
+# ─── 安装 Python 网关依赖 ──────────────────────────────────
+RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --no-cache-dir \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    flask flask-socketio websocket-client eventlet numpy
+
+# ─── 复制源码（用于编译，最终会删除）────────────────────────
+WORKDIR /opt/streaming-asr
+COPY src/stream_server.py src/stream_server.py
+COPY src/asr_license_client.py src/asr_license_client.py
+COPY src/stream_test.html src/stream_test.html
+
+# ─── 启动脚本 ─────────────────────────────────────────────
+COPY start_merged.sh /opt/streaming-asr/start_merged.sh
+RUN chmod +x /opt/streaming-asr/start_merged.sh
+
+# ============================================================
+# 黑盒处理：编译 → 验证 → 删除源码
+# ============================================================
+
+# 1. 编译 Python 文件为 .pyc 字节码（-b 生成同名 .pyc）
+RUN python3 -m compileall -b /opt/streaming-asr/src/stream_server.py && \
+    python3 -m compileall -b /opt/streaming-asr/src/asr_license_client.py
+
+# 2. 验证编译产物存在
+RUN test -f /opt/streaming-asr/src/stream_server.pyc && \
+    test -f /opt/streaming-asr/src/asr_license_client.pyc && \
+    echo "[OK] Black-box compilation verified"
+
+# 3. 删除所有 .py 源文件及 __pycache__
+RUN rm -f /opt/streaming-asr/src/stream_server.py && \
+    rm -f /opt/streaming-asr/src/asr_license_client.py && \
+    find /opt/streaming-asr -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null; \
+    echo "[OK] Source files removed"
+
+# 4. 最终验证：确认无 .py 残留（stream_test.html 保留，是前端页面）
+RUN test ! -f /opt/streaming-asr/src/stream_server.py && \
+    test ! -f /opt/streaming-asr/src/asr_license_client.py && \
+    echo "[OK] Black box confirmed - no Python source code remains"
+
+# ─── 打包模型文件进镜像 ───────────────────────────────────
+# 构建上下文为 /opt/argosasr/，模型在 models/iic/ 下
+COPY models/iic/ /workspace/models/damo/
+
+# ─── 运行时目录 ───────────────────────────────────────────
+RUN mkdir -p /opt/streaming-asr/results /opt/streaming-asr/audio
+
+EXPOSE 5002 10095
+
+# 使用 .pyc 字节码启动网关
+CMD ["/opt/streaming-asr/start_merged.sh"]

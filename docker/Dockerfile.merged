@@ -1,0 +1,44 @@
+# ============================================================
+# FunASR 流式语音识别服务 Dockerfile（单容器合并部署）
+#
+# 架构：单容器内同时运行 C++ Runtime + Python Gateway
+#   - C++ Runtime: funasr-wss-server-2pass (端口 10095)
+#   - Python Gateway: Flask-SocketIO (端口 5002)
+#
+# 构建命令（从项目根目录执行）:
+#   docker build -f docker/Dockerfile.merged -t argosasr-streaming-delivery .
+#
+# 运行命令（推荐 docker-compose）:
+#   docker-compose -f docker/docker-compose.yml up -d
+#
+# 容器命名规范: argosasr-streaming-delivery（合并容器）
+# 挂载配置:
+#   /opt/argosasr/models/iic → /workspace/models/damo（模型，只读）
+#   /opt/streaming-asr/results → 识别结果（读写）
+#   /opt/streaming-asr/audio   → 录音文件（读写）
+# ============================================================
+
+FROM registry.cn-hangzhou.aliyuncs.com/funasr_repo/funasr:funasr-runtime-sdk-online-cpu-0.1.4
+
+# 安装 Python3 和 pip（Runtime 镜像基于 Ubuntu）
+RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+
+# 安装网关 Python 依赖
+RUN pip3 install --no-cache-dir flask flask-socketio websocket-client eventlet
+
+# 网关代码
+WORKDIR /opt/streaming-asr
+COPY src/stream_server.py src/stream_server.py
+COPY src/asr_license_client.py src/asr_license_client.py
+COPY src/stream_test.html src/stream_test.html
+
+# 启动脚本
+COPY docker/start_merged.sh /opt/streaming-asr/start_merged.sh
+RUN chmod +x /opt/streaming-asr/start_merged.sh
+
+# 创建结果和录音目录
+RUN mkdir -p /opt/streaming-asr/results /opt/streaming-asr/audio
+
+EXPOSE 5002 10095
+
+CMD ["/opt/streaming-asr/start_merged.sh"]

@@ -1,0 +1,764 @@
+{
+  "test_time": "2026-09-14T14:56:18.568072",
+  "server": "http://8.153.92.96:5002",
+  "engine": "funasr-onnx",
+  "sessions": 3,
+  "duration_per_call": 180,
+  "frame_ms": 20,
+  "total_time": 190.0531816482544,
+  "total_sent": 27000,
+  "total_recv": 540,
+  "total_errors": 0,
+  "latency": {
+    "avg": 0.012071996264987521,
+    "min": 0.0,
+    "max": 0.17298054695129395,
+    "p50": 0.011142373085021973,
+    "p90": 0.017249274253845214,
+    "p95": 0.01829440593719481,
+    "p99": 0.02004956007003784
+  },
+  "snapshots": [
+    {
+      "time": "0s",
+      "total_recv": 27,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "10s",
+          "sent_frames": 469,
+          "recv_results": 9,
+          "avg_latency": "0.010s",
+          "max_latency": "0.016s",
+          "min_latency": "0.004s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "10s",
+          "sent_frames": 469,
+          "recv_results": 9,
+          "avg_latency": "0.009s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "10s",
+          "sent_frames": 469,
+          "recv_results": 9,
+          "avg_latency": "0.009s",
+          "max_latency": "0.017s",
+          "min_latency": "0.003s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "10s",
+      "total_recv": 56,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "20s",
+          "sent_frames": 956,
+          "recv_results": 19,
+          "avg_latency": "0.011s",
+          "max_latency": "0.017s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "20s",
+          "sent_frames": 956,
+          "recv_results": 19,
+          "avg_latency": "0.011s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "20s",
+          "sent_frames": 956,
+          "recv_results": 18,
+          "avg_latency": "0.010s",
+          "max_latency": "0.020s",
+          "min_latency": "0.003s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "20s",
+      "total_recv": 84,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "30s",
+          "sent_frames": 1443,
+          "recv_results": 28,
+          "avg_latency": "0.011s",
+          "max_latency": "0.017s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "30s",
+          "sent_frames": 1443,
+          "recv_results": 28,
+          "avg_latency": "0.010s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "30s",
+          "sent_frames": 1443,
+          "recv_results": 28,
+          "avg_latency": "0.009s",
+          "max_latency": "0.020s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "30s",
+      "total_recv": 114,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "40s",
+          "sent_frames": 1928,
+          "recv_results": 38,
+          "avg_latency": "0.011s",
+          "max_latency": "0.017s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "40s",
+          "sent_frames": 1928,
+          "recv_results": 38,
+          "avg_latency": "0.010s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "40s",
+          "sent_frames": 1928,
+          "recv_results": 38,
+          "avg_latency": "0.009s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "40s",
+      "total_recv": 144,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "50s",
+          "sent_frames": 2417,
+          "recv_results": 48,
+          "avg_latency": "0.011s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "50s",
+          "sent_frames": 2418,
+          "recv_results": 48,
+          "avg_latency": "0.010s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "50s",
+          "sent_frames": 2418,
+          "recv_results": 48,
+          "avg_latency": "0.009s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "50s",
+      "total_recv": 173,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "60s",
+          "sent_frames": 2906,
+          "recv_results": 58,
+          "avg_latency": "0.011s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "60s",
+          "sent_frames": 2906,
+          "recv_results": 58,
+          "avg_latency": "0.011s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "60s",
+          "sent_frames": 2906,
+          "recv_results": 57,
+          "avg_latency": "0.009s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "60s",
+      "total_recv": 201,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "70s",
+          "sent_frames": 3391,
+          "recv_results": 67,
+          "avg_latency": "0.011s",
+          "max_latency": "0.019s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "70s",
+          "sent_frames": 3391,
+          "recv_results": 67,
+          "avg_latency": "0.011s",
+          "max_latency": "0.019s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "70s",
+          "sent_frames": 3392,
+          "recv_results": 67,
+          "avg_latency": "0.010s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "70s",
+      "total_recv": 231,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "80s",
+          "sent_frames": 3879,
+          "recv_results": 77,
+          "avg_latency": "0.012s",
+          "max_latency": "0.019s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "80s",
+          "sent_frames": 3879,
+          "recv_results": 77,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "80s",
+          "sent_frames": 3880,
+          "recv_results": 77,
+          "avg_latency": "0.010s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "80s",
+      "total_recv": 261,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "90s",
+          "sent_frames": 4369,
+          "recv_results": 87,
+          "avg_latency": "0.011s",
+          "max_latency": "0.019s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "90s",
+          "sent_frames": 4369,
+          "recv_results": 87,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "90s",
+          "sent_frames": 4370,
+          "recv_results": 87,
+          "avg_latency": "0.010s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "90s",
+      "total_recv": 291,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "100s",
+          "sent_frames": 4858,
+          "recv_results": 97,
+          "avg_latency": "0.012s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "100s",
+          "sent_frames": 4858,
+          "recv_results": 97,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.002s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "100s",
+          "sent_frames": 4859,
+          "recv_results": 97,
+          "avg_latency": "0.010s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "100s",
+      "total_recv": 318,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "110s",
+          "sent_frames": 5346,
+          "recv_results": 106,
+          "avg_latency": "0.012s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "110s",
+          "sent_frames": 5346,
+          "recv_results": 106,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "110s",
+          "sent_frames": 5347,
+          "recv_results": 106,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "110s",
+      "total_recv": 348,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "120s",
+          "sent_frames": 5833,
+          "recv_results": 116,
+          "avg_latency": "0.012s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "120s",
+          "sent_frames": 5833,
+          "recv_results": 116,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "120s",
+          "sent_frames": 5834,
+          "recv_results": 116,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "120s",
+      "total_recv": 378,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "130s",
+          "sent_frames": 6319,
+          "recv_results": 126,
+          "avg_latency": "0.012s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "130s",
+          "sent_frames": 6319,
+          "recv_results": 126,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "130s",
+          "sent_frames": 6320,
+          "recv_results": 126,
+          "avg_latency": "0.010s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "130s",
+      "total_recv": 405,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "140s",
+          "sent_frames": 6801,
+          "recv_results": 135,
+          "avg_latency": "0.012s",
+          "max_latency": "0.026s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "140s",
+          "sent_frames": 6800,
+          "recv_results": 135,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "140s",
+          "sent_frames": 6800,
+          "recv_results": 135,
+          "avg_latency": "0.010s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "140s",
+      "total_recv": 435,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "150s",
+          "sent_frames": 7290,
+          "recv_results": 145,
+          "avg_latency": "0.012s",
+          "max_latency": "0.026s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "150s",
+          "sent_frames": 7289,
+          "recv_results": 145,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "150s",
+          "sent_frames": 7289,
+          "recv_results": 145,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "150s",
+      "total_recv": 465,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "160s",
+          "sent_frames": 7778,
+          "recv_results": 155,
+          "avg_latency": "0.012s",
+          "max_latency": "0.026s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "160s",
+          "sent_frames": 7777,
+          "recv_results": 155,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "160s",
+          "sent_frames": 7777,
+          "recv_results": 155,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "160s",
+      "total_recv": 495,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "170s",
+          "sent_frames": 8267,
+          "recv_results": 165,
+          "avg_latency": "0.012s",
+          "max_latency": "0.026s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "170s",
+          "sent_frames": 8266,
+          "recv_results": 165,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "170s",
+          "sent_frames": 8266,
+          "recv_results": 165,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.001s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "170s",
+      "total_recv": 524,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "180s",
+          "sent_frames": 8756,
+          "recv_results": 175,
+          "avg_latency": "0.012s",
+          "max_latency": "0.026s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "180s",
+          "sent_frames": 8755,
+          "recv_results": 175,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "180s",
+          "sent_frames": 8755,
+          "recv_results": 174,
+          "avg_latency": "0.011s",
+          "max_latency": "0.020s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    },
+    {
+      "time": "180s",
+      "total_recv": 540,
+      "details": [
+        {
+          "session": 0,
+          "elapsed": "187s",
+          "sent_frames": 9000,
+          "recv_results": 180,
+          "avg_latency": "0.013s",
+          "max_latency": "0.093s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 1,
+          "elapsed": "187s",
+          "sent_frames": 9000,
+          "recv_results": 180,
+          "avg_latency": "0.012s",
+          "max_latency": "0.173s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        },
+        {
+          "session": 2,
+          "elapsed": "187s",
+          "sent_frames": 9000,
+          "recv_results": 180,
+          "avg_latency": "0.011s",
+          "max_latency": "0.091s",
+          "min_latency": "0.000s",
+          "errors": 0,
+          "connected": true
+        }
+      ]
+    }
+  ]
+}

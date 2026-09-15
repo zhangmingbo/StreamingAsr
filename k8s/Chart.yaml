@@ -1,0 +1,6 @@
+apiVersion: v2
+name: argosasr-streaming-delivery
+description: FunASR 流式语音识别服务
+type: application
+version: 1.0.0
+appVersion: "3.0"
