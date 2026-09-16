@@ -65,6 +65,7 @@
         }
         .status-dot.connected { background: #00e676; box-shadow: 0 0 10px #00e676; }
         .status-dot.recording { background: #ff5252; animation: pulse 1s infinite; }
+        .status-dot.speaking { background: #ffd740; box-shadow: 0 0 12px #ffd740; animation: pulse 0.5s infinite; }
         .status-dot.error { background: #ff5252; }
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -169,6 +170,26 @@
             font-size: 15px;
             line-height: 1.6;
         }
+        .speech-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 215, 64, 0.1);
+            border: 1px solid rgba(255, 215, 64, 0.3);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #ffd740;
+            margin-bottom: 15px;
+        }
+        .speech-indicator.active { display: flex; }
+        .speech-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ffd740;
+            animation: pulse 0.5s infinite;
+        }
         .stats-bar {
             text-align: center;
             padding: 15px;
@@ -231,6 +252,11 @@
             </select>
             <button id="startBtn" onclick="startStream()">开始说话</button>
             <button id="stopBtn" onclick="stopStream()" disabled>停止</button>
+        </div>
+
+        <div class="speech-indicator" id="speechIndicator">
+            <div class="speech-dot"></div>
+            <span id="speechText">检测到语音活动...</span>
         </div>
 
         <div class="transcript-area">
@@ -317,6 +343,36 @@
 
             socket.on("started", (data) => {
                 console.log("会话已启动:", data);
+            });
+
+            // ── 语音活动检测事件 ──
+            socket.on("speech_start", (data) => {
+                const indicator = document.getElementById('speechIndicator');
+                const speechText = document.getElementById('speechText');
+                indicator.classList.add('active');
+                speechText.textContent = `检测到语音: ${data.text || ''}`;
+                // 状态点变为说话中（黄色脉冲）
+                const dot = document.getElementById('statusDot');
+                if (dot && isStreaming) {
+                    dot.className = 'status-dot speaking';
+                }
+                console.log('[speech_start]', data);
+            });
+
+            socket.on("speech_end", (data) => {
+                const indicator = document.getElementById('speechIndicator');
+                const speechText = document.getElementById('speechText');
+                speechText.textContent = `语音结束 (${data.duration_ms || 0}ms): ${data.text || ''}`;
+                // 2秒后隐藏指示器
+                setTimeout(() => {
+                    indicator.classList.remove('active');
+                }, 2000);
+                // 状态点恢复为录音中
+                const dot = document.getElementById('statusDot');
+                if (dot && isStreaming) {
+                    dot.className = 'status-dot recording';
+                }
+                console.log('[speech_end]', data);
             });
 
             socket.on("recognition_result", (data) => {

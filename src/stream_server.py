@@ -97,6 +97,8 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading",
 #   "ws_thread": threading.Thread or None,
 #   "ws_ready": threading.Event,
 #   "pending_audio": list[bytes],   # WS 未就绪时暂存音频
+#   "speech_detected": bool,        # 本轮是否已触发 speech_start
+#   "speech_start_time": float,     # 首次检测到语音的时间戳
 # }
 sessions = {}
 _sessions_lock = threading.Lock()
@@ -118,7 +120,7 @@ def _create_runtime_ws(sid):
     _retry_delay = 1.0
 
     def on_message(ws, message):
-        """接收 Runtime 识别结果，推送给前端"""
+        """接收 Runtime 识别结果，推送给前端（含 speech_start / speech_end 事件）"""
         try:
             data = json.loads(message)
         except json.JSONDecodeError:
@@ -131,6 +133,38 @@ def _create_runtime_ws(sid):
         if not is_final:
             is_final = data.get("is_final", False) or data.get("final", False)
 
+        session = sessions.get(sid)
+
+        # ── speech_start 检测：首个非空识别结果 → 用户开始说话 ──
+        if text and session and not session.get("speech_detected"):
+            session["speech_detected"] = True
+            session["speech_start_time"] = time.time()
+            try:
+                socketio.emit('speech_start', {'text': text}, room=sid)
+            except Exception:
+                pass
+            print(f"[Gateway] speech_start for {sid}: {text}")
+            sys.stdout.flush()
+
+        # ── speech_end 检测：is_final → 用户说完一句话 ──
+        if is_final and session:
+            duration_ms = 0
+            if session.get("speech_start_time"):
+                duration_ms = int((time.time() - session["speech_start_time"]) * 1000)
+            try:
+                socketio.emit('speech_end', {
+                    'text': text,
+                    'duration_ms': duration_ms,
+                }, room=sid)
+            except Exception:
+                pass
+            print(f"[Gateway] speech_end for {sid}: {text} ({duration_ms}ms)")
+            sys.stdout.flush()
+            # 重置语音活动状态，准备下一轮
+            session["speech_detected"] = False
+            session["speech_start_time"] = None
+
+        # ── 推送识别结果（原有逻辑）──
         if text or is_final:
             try:
                 socketio.emit('recognition_result', {
@@ -346,6 +380,8 @@ def handle_connect():
             "ws_ready": threading.Event(),
             "pending_audio": [],
             "_cleanup_pending": False,
+            "speech_detected": False,
+            "speech_start_time": None,
         }
 
     # 异步建立 Runtime WS 连接
@@ -492,6 +528,8 @@ def handle_reset():
             "ws_ready": threading.Event(),
             "pending_audio": [],
             "_cleanup_pending": False,
+            "speech_detected": False,
+            "speech_start_time": None,
         }
 
     threading.Thread(

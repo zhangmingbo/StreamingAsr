@@ -76,6 +76,8 @@ sessions[sid] = {
     "ws_ready": Event,          # Runtime WS 是否就绪
     "pending_audio": list,      # WS 未就绪时暂存音频
     "sample_rate": int,         # 客户端采样率 (8000/16000)
+    "speech_detected": bool,    # 本轮是否已触发 speech_start
+    "speech_start_time": float, # 首次检测到语音的时间戳
 }
 ```
 
@@ -119,10 +121,37 @@ sessions[sid] = {
 7. Gateway: 若 sample_rate == 8000 → 重采样到 16kHz
 8. Gateway: 转发 PCM 到 Runtime (WebSocket)
 9. Runtime: 推理 → 返回识别结果
-10. Gateway: 接收结果 → socketio.emit('recognition_result')
-11. 客户端收到 recognition_result → 更新 UI
+10. Gateway: 接收结果 → 语音活动检测 → emit 事件
+11. 客户端收到事件 → 更新 UI
 12. 客户端发送 end → Runtime 返回最终结果 → 清理会话
 ```
+
+### 4.1 SocketIO 事件协议
+
+| 事件 | 方向 | 触发时机 | payload |
+|------|------|---------|--------|
+| `connected` | S→C | 连接成功 | `{message: "连接成功"}` |
+| `started` | S→C | 会话启动 | `{message, sample_rate}` |
+| `speech_start` | S→C | 首个非空识别结果到达 | `{text: "首个文字"}` |
+| `recognition_result` | S→C | 每次识别结果 | `{text, is_final}` |
+| `speech_end` | S→C | is_final=True | `{text, duration_ms}` |
+| `finished` | S→C | 会话结束 | `{text, duration}` |
+| `error` | S→C | 异常 | `{message}` |
+
+### 4.2 IVR 打断（Barge-in）对接
+
+ASR 服务提供 `speech_start` / `speech_end` 事件供 IVR 平台实现语音打断：
+
+```
+IVR TTS 播报中
+    │
+    ├─ 收到 speech_start → 停止 TTS 播放
+    ├─ 收到 recognition_result (is_final=false) → 缓存中间结果
+    ├─ 收到 speech_end → 准备执行意图
+    └─ 收到 recognition_result (is_final=true) → 意图检测 → 执行动作
+```
+
+**职责分离**：ASR 负责检测用户开口（speech_start）和返回识别文本，意图理解由 IVR 侧完成。
 
 ## 5. 容错机制
 
