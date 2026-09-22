@@ -169,6 +169,14 @@
             color: #ccc;
             font-size: 15px;
             line-height: 1.6;
+            flex: 1;
+        }
+        .history-item .latency {
+            font-size: 11px;
+            color: #00e676;
+            white-space: nowrap;
+            padding-top: 3px;
+            flex-shrink: 0;
         }
         .speech-indicator {
             display: none;
@@ -283,7 +291,7 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         const SAMPLE_RATE = 16000;
-        const CHUNK_MS = 600;
+        const CHUNK_MS = 200;  // 200ms 一个音频块（流式低延迟，原 600ms 延迟过高）
 
         // 服务器地址（根据当前页面协议自动检测）
         const proto = window.location.protocol === 'https:' ? 'https' : 'http';
@@ -299,6 +307,7 @@
         let chunkCount = 0;
         let startTime = null;
         let historyItems = [];
+        let lastLatencyInfo = null;  // 本轮首个识别结果的时延信息（写入历史）
 
         function showError(msg) {
             const toast = document.createElement('div');
@@ -328,7 +337,9 @@
 
             socket = io(SERVER_URL, {
                 transports: ['websocket'],
-                reconnection: false,
+                reconnection: true,          // 网络抖动自动重连（提升稳定性）
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000,
                 timeout: 10000
             });
 
@@ -345,13 +356,22 @@
                 console.log("会话已启动:", data);
             });
 
-            // ── 语音活动检测事件 ──
+            // ─ 语音活动检测事件 ─
             socket.on("speech_start", (data) => {
                 const indicator = document.getElementById('speechIndicator');
                 const speechText = document.getElementById('speechText');
                 indicator.classList.add('active');
-                speechText.textContent = `检测到语音: ${data.text || ''}`;
-                // 状态点变为说话中（黄色脉冲）
+                // 计算 T3→T5 延迟：后端检测到 → 前端收到
+                let latencyInfo = '';
+                if (data.detect_time) {
+                    const latencyMs = Math.round((Date.now() / 1000 - data.detect_time) * 1000);
+                    latencyInfo = ` [延迟 ${latencyMs}ms]`;
+                }
+                if (data.text) {
+                    speechText.textContent = `检测到语音: ${data.text}${latencyInfo}`;
+                } else {
+                    speechText.textContent = `检测到语音活动...${latencyInfo}`;
+                }
                 const dot = document.getElementById('statusDot');
                 if (dot && isStreaming) {
                     dot.className = 'status-dot speaking';
@@ -363,11 +383,8 @@
                 const indicator = document.getElementById('speechIndicator');
                 const speechText = document.getElementById('speechText');
                 speechText.textContent = `语音结束 (${data.duration_ms || 0}ms): ${data.text || ''}`;
-                // 2秒后隐藏指示器
-                setTimeout(() => {
-                    indicator.classList.remove('active');
-                }, 2000);
-                // 状态点恢复为录音中
+                // 立即隐藏指示器
+                indicator.classList.remove('active');
                 const dot = document.getElementById('statusDot');
                 if (dot && isStreaming) {
                     dot.className = 'status-dot recording';
@@ -379,15 +396,32 @@
                 const text = data.text || "";
                 const isFinal = data.is_final;
                 
+                // 首个识别结果：显示分段时延（推理段 + 下发段 = 总延迟）
+                if (text && data.result_latency) {
+                    const indicator = document.getElementById('speechIndicator');
+                    const speechText = document.getElementById('speechText');
+                    // 下发段：后端发出 → 前端收到
+                    let downMs = 0;
+                    if (data.server_time) {
+                        downMs = Math.round((Date.now() / 1000 - data.server_time) * 1000);
+                    }
+                    // 保存时延信息，最终结果加入历史时一并展示
+                    lastLatencyInfo = `推理 ${data.result_latency}ms · 下发 ${downMs}ms · 总 ${data.result_latency + downMs}ms`;
+                    if (indicator.classList.contains('active')) {
+                        speechText.textContent = `识别结果返回 [${lastLatencyInfo}]: ${text}`;
+                    }
+                }
+                
                 if (text) {
                     if (!isFinal) {
                         // 中间结果：灰色斜体显示
                         document.getElementById('currentText').innerHTML = 
                             `<span class="partial">${text}</span>`;
                     } else {
-                        // 最终结果：正常显示 + 加入历史
+                        // 最终结果：正常显示 + 时延信息一并加入历史
                         document.getElementById('currentText').innerHTML = text;
-                        addHistory(text);
+                        addHistory(text, lastLatencyInfo);
+                        lastLatencyInfo = null;
                     }
                 }
                 
@@ -470,7 +504,7 @@
                 // 创建音频处理
                 audioContext = new AudioContext({ sampleRate: selectedRate });
                 const source = audioContext.createMediaStreamSource(mediaStream);
-                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                processor = audioContext.createScriptProcessor(2048, 1, 1);  // 128ms 缓冲（原 4096=256ms 延迟过高）
                 source.connect(processor);
                 processor.connect(audioContext.destination);
 
@@ -520,6 +554,7 @@
                 chunkCount = 0;
                 startTime = Date.now();
                 audioBuffer = [];
+                lastLatencyInfo = null;  // 新一轮录音，重置时延信息
 
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = false;
@@ -570,11 +605,11 @@
             setStatus("connected", "已停止");
         }
 
-        function addHistory(text) {
+        function addHistory(text, latencyInfo) {
             if (!text) return;
             const now = new Date();
             const time = now.toTimeString().slice(0, 8);
-            historyItems.unshift({ time, text });
+            historyItems.unshift({ time, text, latency: latencyInfo || '' });
             if (historyItems.length > 20) historyItems.pop();
             renderHistory();
         }
@@ -593,6 +628,7 @@
                 <div class="history-item">
                     <span class="time">${h.time}</span>
                     <span class="text">${escapeHtml(h.text)}</span>
+                    ${h.latency ? `<span class="latency">${escapeHtml(h.latency)}</span>` : ''}
                 </div>
             `).join('');
         }

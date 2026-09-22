@@ -102,16 +102,47 @@ SERVICE_URL = f"http://{SERVER_IP}:{SERVICE_PORT}"
 # ─── 公共工具函数 ───
 
 def ssh_exec(cmd, timeout=300):
-    """SSH 远程执行命令并返回 (stdout, stderr)"""
+    """SSH 远程执行命令并返回 (stdout, stderr)
+
+    实现说明：stdout.read() 会阻塞到通道 EOF；若远程有后台进程持有
+    通道 fd，read() 会永久挂起。改为轮询读取：
+    - 远程命令退出（exit_status 就绪）后再吸 1 秒残余输出即返回；
+    - 命令未退出则持续读取，直到 timeout 截止。
+    启动后台进程请自行重定向 stdin/stdout/stderr 脱离通道。
+    """
     import paramiko
+    import time
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(SERVER_IP, username=SERVER_USER, password=SERVER_PASS, timeout=30)
     stdin, stdout, stderr = client.exec_command(cmd, timeout=timeout)
-    out = stdout.read().decode('utf-8', errors='replace')
-    err = stderr.read().decode('utf-8', errors='replace')
+    out = b''
+    err = b''
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            if stdout.channel.recv_ready():
+                out += stdout.channel.recv(65536)
+            if stderr.channel.recv_ready():
+                err += stderr.channel.recv(65536)
+        except Exception:
+            break
+        if stdout.channel.exit_status_ready():
+            # 进程已退出，再吸 1 秒残余输出
+            tail_deadline = time.time() + 1.0
+            while time.time() < tail_deadline:
+                try:
+                    if stdout.channel.recv_ready():
+                        out += stdout.channel.recv(65536)
+                    if stderr.channel.recv_ready():
+                        err += stderr.channel.recv(65536)
+                except Exception:
+                    break
+                time.sleep(0.05)
+            break
+        time.sleep(0.1)
     client.close()
-    return out, err
+    return out.decode('utf-8', errors='replace'), err.decode('utf-8', errors='replace')
 
 
 def ssh_connect():
