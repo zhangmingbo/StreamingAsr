@@ -1,0 +1,83 @@
+# UniMRCP demoverifier 交互消息流对照基准（Task 1 实测抓取）
+# 时间: 2026-09-16  服务器: 8.153.92.96  版本: UniMRCP 1.8.0
+# 场景: umc 客户端 run verify uni2 -> unimrcpserver (Demo-Verifier-1)
+# 音频: /usr/local/unimrcp/data/johnsmith-8kHz.pcm (LPCM/8000/1 -> PCMU/8000/1)
+
+# ===== SIP INVITE (关键 SDP 行) =====
+# a=resource:speakverify
+# a=channel:2f9e9b62b1ad11f1@speakverify
+# 控制通道 TCP: 172.21.47.41:54600 <-> 172.21.47.41:1544
+# RTP: 172.21.47.41:4000 -> 172.21.47.41:5000
+
+# ===== 1. START-SESSION =====
+MRCP/2.0 200 START-SESSION 1
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+Repository-URI: http://www.example.com/voiceprintdbase/
+Voiceprint-Identifier: johnsmith
+Verification-Mode: verify
+
+# ===== 2. START-SESSION 响应 =====
+MRCP/2.0 80 1 200 COMPLETE
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+
+# ===== 3. VERIFY 请求 =====
+MRCP/2.0 125 VERIFY 2
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+No-Input-Timeout: 5000
+Start-Input-Timers: true
+
+# ===== 4. VERIFY 响应 (立即 IN-PROGRESS) =====
+MRCP/2.0 83 2 200 IN-PROGRESS
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+
+# ===== 5. 服务器事件: START-OF-INPUT =====
+MRCP/2.0 94 START-OF-INPUT 2 IN-PROGRESS
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+
+# ===== 6. 服务器事件: VERIFICATION-COMPLETE (NLSML 结果) =====
+MRCP/2.0 850 VERIFICATION-COMPLETE 2 COMPLETE
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+Completion-Cause: 000 success
+Content-Type: application/nlsml+xml
+Content-Length: 662
+
+<?xml version="1.0"?>
+<result>
+  <verification-result>
+    <voiceprint id="johnsmith">
+      <incremental>
+        <utterance-length> 500 </utterance-length>
+        <device> cellular-phone </device>
+        <gender> male </gender>
+        <decision> accepted </decision>
+        <verification-score> 0.85 </verification-score>
+      </incremental>
+      <cumulative>
+        <utterance-length> 1500 </utterance-length>
+        <device> cellular-phone </device>
+        <gender> male </gender>
+        <decision> accepted </decision>
+        <verification-score> 0.75 </verification-score>
+      </cumulative>
+    </voiceprint>
+  </verification-result>
+</result>
+
+# ===== 7. END-SESSION =====
+MRCP/2.0 79 END-SESSION 3
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+
+# ===== 8. END-SESSION 响应 =====
+MRCP/2.0 80 3 200 COMPLETE
+Channel-Identifier: 2f9e9b62b1ad11f1@speakverify
+
+# ===== 9. SIP BYE -> 200 OK -> terminated =====
+
+# ===== 关键要点 (自研 ASR 插件对照) =====
+# 1. 控制通道 = 独立 TCP 连接 (SIP 协商的 channel id)
+# 2. 请求格式: MRCP/2.0 <len> <METHOD> <request-id>
+# 3. 事件格式: MRCP/2.0 <len> <EVENT-NAME> <request-id> <state>  (无响应行)
+# 4. 响应格式: MRCP/2.0 <len> <request-id> <code> <state>
+# 5. RECOGNIZE 对应事件应为 RECOGNITION-COMPLETE, 结果同样 application/nlsml+xml
+# 6. START-OF-INPUT 在检测到语音时立即发送 (request-id 关联原请求)
+# 7. No-Input-Timeout / Start-Input-Timers 为常用头

@@ -1,0 +1,99 @@
+# ============================================================
+# UniMRCP Server + mrcpfunasr 插件 — 黑盒镜像
+#
+# 构建（项目根目录为构建上下文）：
+#   docker build -f docker/Dockerfile.unimrcp -t mrcp-bridge:v1.0 .
+#
+# 运行（推荐 host 网络，避免 RTP UDP 端口映射）：
+#   docker run -d --name mrcp-bridge --network host \
+#     -e GW_HOST=127.0.0.1 -e GW_PORT=5003 \
+#     -v /opt/mrcp-bridge/log:/usr/local/unimrcp/log \
+#     -v /opt/mrcp-bridge/var:/usr/local/unimrcp/var \
+#     mrcp-bridge:v1.0
+#
+# 环境变量：
+#   GW_HOST    — ASR 网关地址（插件内部 WS 连接目标，默认 127.0.0.1）
+#   GW_PORT    — ASR 网关内部 WS 端口（默认 5003）
+#   SERVER_IP  — MRCP 服务端 <sip-uas> server-ip（可选，不设则保持默认配置）
+# ============================================================
+
+# ---------- 阶段 1: 编译 ----------
+FROM almalinux:9 AS builder
+
+ARG UNIMRCP_VER=1.8.0
+ARG DEPS_VER=1.6.0
+
+# 1) 编译依赖
+RUN dnf install -y --setopt=tsflags=nodocs \
+        gcc gcc-c++ make autoconf automake libtool pkgconf \
+        tar gzip bzip2 openssl-devel expat-devel python3
+
+# 源码包随构建上下文 COPY（docker/ 目录下），构建不依赖外网
+COPY docker/unimrcp-${UNIMRCP_VER}.tar.gz /opt/unimrcp-build/
+COPY docker/unimrcp-deps-${DEPS_VER}.tar.gz /opt/unimrcp-build/
+RUN cd /opt/unimrcp-build \
+    && tar xzf unimrcp-${UNIMRCP_VER}.tar.gz \
+    && tar xzf unimrcp-deps-${DEPS_VER}.tar.gz \
+    && ls -d /opt/unimrcp-build/*/
+
+# 2) 编译 apr / apr-util / sofia-sip（deps 解压目录名随版本归档而定，用通配定位）
+RUN DEPS_DIR=$(ls -d /opt/unimrcp-build/unimrcp-deps-*/) \
+    && cd ${DEPS_DIR}libs/apr \
+    && ./configure --prefix=/usr/local/apr \
+    && make -j$(nproc) && make install \
+    && cd ../apr-util \
+    && ./configure --prefix=/usr/local/apr-util --with-apr=/usr/local/apr \
+    && make -j$(nproc) && make install \
+    && cd ../sofia-sip \
+    && ./configure --prefix=/usr/local \
+    && make -j$(nproc) && make install \
+    && ldconfig
+
+# 3) 集成 mrcp-funasr 插件源码并 patch 构建体系
+COPY docker/mrcp-plugin/src/mrcp_funasr_engine.c /opt/unimrcp-build/UniMRCP-unimrcp-${UNIMRCP_VER}/plugins/mrcp-funasr/src/
+COPY docker/mrcp-plugin/src/ws_client.c /opt/unimrcp-build/UniMRCP-unimrcp-${UNIMRCP_VER}/plugins/mrcp-funasr/src/
+COPY docker/mrcp-plugin/src/ws_client.h /opt/unimrcp-build/UniMRCP-unimrcp-${UNIMRCP_VER}/plugins/mrcp-funasr/src/
+COPY docker/mrcp-plugin/Makefile.am /opt/unimrcp-build/UniMRCP-unimrcp-${UNIMRCP_VER}/plugins/mrcp-funasr/
+COPY docker/mrcp-plugin/patch_configure_ac.py /opt/unimrcp-build/
+
+RUN python3 /opt/unimrcp-build/patch_configure_ac.py \
+    && cd /opt/unimrcp-build/UniMRCP-unimrcp-${UNIMRCP_VER} \
+    && export PATH=/usr/local/apr/bin:${PATH} \
+    && ./bootstrap \
+    && ./configure --with-apr=/usr/local/apr --with-apr-util=/usr/local/apr-util --with-sofia-sip=/usr/local \
+    && make -j$(nproc) \
+    && make install \
+    && ldconfig
+
+# 4) 注册引擎 + speechrecog 资源映射（gateway 地址用占位符，运行时渲染）
+COPY docker/mrcp-plugin/patch_conf_all.py /opt/unimrcp-build/
+RUN python3 /opt/unimrcp-build/patch_conf_all.py \
+    && ls -la /usr/local/unimrcp/plugin/ | grep -i funasr
+
+# ---------- 阶段 2: 运行时 ----------
+FROM almalinux:9
+
+# 运行时库与程序（apr/apr-util/sofia-sip/unimrcp 全部装在 /usr/local 下）
+COPY --from=builder /usr/local/unimrcp /usr/local/unimrcp
+COPY --from=builder /usr/local/apr /usr/local/apr
+COPY --from=builder /usr/local/apr-util /usr/local/apr-util
+COPY --from=builder /usr/local/lib /usr/local/lib
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /usr/local/include /usr/local/include
+COPY --from=builder /usr/local/share /usr/local/share
+
+# 运行时系统库 + 动态库搜索路径
+RUN dnf install -y --setopt=tsflags=nodocs openssl-libs expat libstdc++ \
+    && printf '/usr/local/lib\n/usr/local/apr/lib\n/usr/local/apr-util/lib\n' > /etc/ld.so.conf.d/unimrcp.conf \
+    && ldconfig \
+    && mkdir -p /usr/local/unimrcp/log /usr/local/unimrcp/var
+
+# 入口脚本：渲染 gateway 参数 + 启动（stdin 管道阻塞防控制台忙循环）
+COPY docker/unimrcp-entrypoint.sh /usr/local/bin/unimrcp-entrypoint.sh
+RUN chmod +x /usr/local/bin/unimrcp-entrypoint.sh
+
+EXPOSE 8060/tcp
+# 日志与 utter 音频持久化（排障关键证据，必须挂卷）
+VOLUME ["/usr/local/unimrcp/log", "/usr/local/unimrcp/var"]
+
+ENTRYPOINT ["/usr/local/bin/unimrcp-entrypoint.sh"]

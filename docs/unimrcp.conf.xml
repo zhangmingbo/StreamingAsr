@@ -1,0 +1,26 @@
+<configuration name="unimrcp.conf" description="UniMRCP Client Configuration">
+  <settings>
+    <param name="max-connection-count" value="100"/>
+    <param name="offer-new-connection" value="1"/>
+    <param name="default-tts-profile" value="uni2"/>
+    <param name="default-asr-profile" value="uni2"/>
+    <param name="log-level" value="WARNING"/>
+    <param name="enable-profile-events" value="false"/>
+    <param name="request-timeout" value="10000"/>
+  </settings>
+  <profiles>
+    <profile name="uni2" version="2">
+      <param name="client-ip" value="127.0.0.1"/>
+      <param name="server-ip" value="127.0.0.1"/>
+      <param name="server-port" value="8060"/>
+      <param name="sip-transport" value="tcp"/>
+      <param name="ua-name" value="FreeSWITCH"/>
+      <param name="sdp-origin" value="FreeSWITCH"/>
+      <param name="rtp-ip" value="127.0.0.1"/>
+      <param name="rtp-port-min" value="40000"/>
+      <param name="rtp-port-max" value="40960"/>
+      <param name="codecs" value="PCMU PCMA L16/96/8000 telephone-event/101/8000"/>
+      <param name="ptime" value="20"/>
+    </profile>
+  </profiles>
+</configuration>
