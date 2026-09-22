@@ -34,3 +34,4 @@ Thumbs.db
 
 # Debug scripts
 _*.py
+_tmp_*
